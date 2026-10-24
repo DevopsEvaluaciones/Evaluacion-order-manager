@@ -1,4 +1,3 @@
-
 name: CI-CD Order Manager
 
 on:
@@ -83,6 +82,7 @@ jobs:
             type=sha
             type=ref,event=branch
             type=semver,pattern={{version}}
+            type=ref,event=tag
 
       - name: Build and push image
         uses: docker/build-push-action@v6
@@ -123,9 +123,10 @@ jobs:
 
       - name: Update Kubernetes deployment
         env:
-          IMAGE: ghcr.io/${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+
           kubectl set image deployment/order-manager \
             order-manager="$IMAGE:$TAG"
 
