@@ -12,10 +12,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
+import static org.mockito.ArgumentMatchers.eq;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -123,4 +124,96 @@ class OrderControllerTest {
         mockMvc.perform(delete("/api/orders/1"))
                 .andExpect(status().isNoContent());
     }
+   
+    @Test
+    @DisplayName("GET /api/orders/status/{status}: retorna pedidos por estado")
+    void shouldReturnOrdersByStatus() throws Exception {
+        Order order = new Order("Juan");
+        order.setId(1L);
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        when(service.getOrdersByStatus(OrderStatus.CONFIRMED))
+                .thenReturn(List.of(order));
+
+        mockMvc.perform(get("/api/orders/status/CONFIRMED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/orders/{id}/items: agrega un producto")
+    void shouldAddItemToOrder() throws Exception {
+        Order order = new Order("Juan");
+        order.setId(1L);
+
+        when(service.addItem(eq(1L), any())).thenReturn(order);
+
+        String body = """
+                {
+                  "productName": "Teclado",
+                  "quantity": 2,
+                  "unitPrice": 15000
+                }
+                """;
+
+        mockMvc.perform(post("/api/orders/1/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        verify(service).addItem(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("PUT /api/orders/{id}/ship: envía pedido")
+    void shouldShipOrder() throws Exception {
+        Order order = new Order("Juan");
+        order.setId(1L);
+        order.setStatus(OrderStatus.SHIPPED);
+
+        when(service.shipOrder(1L)).thenReturn(order);
+
+        mockMvc.perform(put("/api/orders/1/ship"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SHIPPED"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/orders/{id}/deliver: entrega pedido")
+    void shouldDeliverOrder() throws Exception {
+        Order order = new Order("Juan");
+        order.setId(1L);
+        order.setStatus(OrderStatus.DELIVERED);
+
+        when(service.deliverOrder(1L)).thenReturn(order);
+
+        mockMvc.perform(put("/api/orders/1/deliver"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DELIVERED"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/orders/{id}/cancel: cancela pedido")
+    void shouldCancelOrder() throws Exception {
+        Order order = new Order("Juan");
+        order.setId(1L);
+        order.setStatus(OrderStatus.CANCELLED);
+
+        when(service.cancelOrder(1L)).thenReturn(order);
+
+        mockMvc.perform(put("/api/orders/1/cancel"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+
+
+
+
+
+
+
+
+
 }
