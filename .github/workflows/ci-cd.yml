@@ -60,12 +60,19 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
       - name: Snyk scan
-        uses: snyk/actions/maven@0.4.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=pom.xml --severity-threshold=high
+        run: snyk test --file=pom.xml --severity-threshold=high
+        
   build-image:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
