@@ -1,0 +1,10 @@
+version: v1.25.0
+ignore:
+  SNYK-JAVA-ORGGLASSFISHJAXB-20883142:
+    - '*':
+        reason: >
+          Sin parche disponible en Hibernate 7.2 / jaxb-core 4.0.9.
+          El proyecto no procesa XML de entrada (ver búsqueda en src/).
+          Riesgo aceptado por el equipo.
+        expires: 2027-01-31T00:00:00.000Z
+        created: 2026-10-24T00:00:00.000Z
