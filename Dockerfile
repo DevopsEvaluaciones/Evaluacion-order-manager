@@ -9,6 +9,7 @@ COPY src ./src
 RUN mvn -B package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
