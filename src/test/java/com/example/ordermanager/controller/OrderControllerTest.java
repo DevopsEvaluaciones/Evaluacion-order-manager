@@ -12,7 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.mockito.ArgumentMatchers.eq;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -124,7 +124,7 @@ class OrderControllerTest {
         mockMvc.perform(delete("/api/orders/1"))
                 .andExpect(status().isNoContent());
     }
-   
+
     @Test
     @DisplayName("GET /api/orders/status/{status}: retorna pedidos por estado")
     void shouldReturnOrdersByStatus() throws Exception {
@@ -207,13 +207,120 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
 
+    // ============================================================
+    // Casos de error: 404 (recurso inexistente)
+    // ============================================================
 
+    @Test
+    @DisplayName("PUT /api/orders/{id}/confirm: retorna 404 si el pedido no existe")
+    void shouldReturn404WhenConfirmingMissingOrder() throws Exception {
+        when(service.confirmOrder(99L)).thenThrow(new OrderNotFoundException(99L));
 
+        mockMvc.perform(put("/api/orders/99/confirm"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
 
+    @Test
+    @DisplayName("POST /api/orders/{id}/items: retorna 404 si el pedido no existe")
+    void shouldReturn404WhenAddingItemToMissingOrder() throws Exception {
+        when(service.addItem(eq(99L), any())).thenThrow(new OrderNotFoundException(99L));
 
+        String body = """
+                {
+                  "productName": "Teclado",
+                  "quantity": 2,
+                  "unitPrice": 15000
+                }
+                """;
 
+        mockMvc.perform(post("/api/orders/99/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
+    }
 
+    @Test
+    @DisplayName("DELETE /api/orders/{id}: retorna 404 si el pedido no existe")
+    void shouldReturn404WhenDeletingMissingOrder() throws Exception {
+        doThrow(new OrderNotFoundException(99L)).when(service).deleteOrder(99L);
 
+        mockMvc.perform(delete("/api/orders/99"))
+                .andExpect(status().isNotFound());
+    }
 
+    // ============================================================
+    // Casos de error: 409 (transición de estado inválida)
+    // ============================================================
 
+    @Test
+    @DisplayName("PUT /api/orders/{id}/ship: retorna 409 si el estado es inválido")
+    void shouldReturn409WhenShippingInvalidState() throws Exception {
+        when(service.shipOrder(1L)).thenThrow(
+                new InvalidOrderStateException("PENDING", "SHIPPED"));
+
+        mockMvc.perform(put("/api/orders/1/ship"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PUT /api/orders/{id}/deliver: retorna 409 si el estado es inválido")
+    void shouldReturn409WhenDeliveringInvalidState() throws Exception {
+        when(service.deliverOrder(1L)).thenThrow(
+                new InvalidOrderStateException("PENDING", "DELIVERED"));
+
+        mockMvc.perform(put("/api/orders/1/deliver"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PUT /api/orders/{id}/cancel: retorna 409 si el estado es inválido")
+    void shouldReturn409WhenCancellingInvalidState() throws Exception {
+        when(service.cancelOrder(1L)).thenThrow(
+                new InvalidOrderStateException("DELIVERED", "CANCELLED"));
+
+        mockMvc.perform(put("/api/orders/1/cancel"))
+                .andExpect(status().isConflict());
+    }
+
+    // ============================================================
+    // Casos de error: 400 (datos inválidos)
+    // ============================================================
+
+    @Test
+    @DisplayName("POST /api/orders/{id}/items: retorna 400 si el producto es inválido")
+    void shouldReturn400WhenItemIsInvalid() throws Exception {
+        String body = """
+                {
+                  "productName": "",
+                  "quantity": 0,
+                  "unitPrice": -5
+                }
+                """;
+
+        mockMvc.perform(post("/api/orders/1/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).addItem(any(), any());
+    }
+
+    @Test
+    @DisplayName("POST /api/orders: retorna 400 si el JSON está mal formado")
+    void shouldReturn400WhenJsonIsMalformed() throws Exception {
+        mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"customerName\":"))
+                .andExpect(status().isBadRequest());
+
+        verify(service, never()).createOrder(any());
+    }
+
+    @Test
+    @DisplayName("GET /api/orders/status/{status}: retorna 400 si el estado no existe")
+    void shouldReturn400WhenStatusIsUnknown() throws Exception {
+        mockMvc.perform(get("/api/orders/status/INEXISTENTE"))
+                .andExpect(status().isBadRequest());
+    }
 }
