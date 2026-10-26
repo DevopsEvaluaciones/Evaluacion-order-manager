@@ -115,7 +115,7 @@ jobs:
             type=ref,event=tag
 
       - name: Build image (local)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -132,7 +132,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Push image to GHCR
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
