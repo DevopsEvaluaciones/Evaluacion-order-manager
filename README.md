@@ -532,7 +532,7 @@ Durante el trabajo cometí algunos errores, como trabajar en una carpeta equivoc
 
 ### Bastian
 
-
+Fui responsable de integrar herramientas de análisis de dependencias y seguridad en el pipeline de CI/CD. Snyk ejecuta snyk test con --severity-threshold=high después del job de pruebas y antes del despliegue. Durante la migración de Spring Boot 3.3.4 a 4.0.9, los hallazgos bajaron de 69 a 1, esto nos aseguro que eran problemas debido a la version del mismo Spring Boot; el restante es una vulnerabilidad XXE sin parche, documentada en .snyk con fecha de expiración. Trivy escanea la imagen construida antes de publicarla en GHCR: la primera ejecución falló por CVE-2026-111497 en brotli-libs, y se corrigió con apk upgrade --no-cache en el PR #31. Dependabot se configuró con target-branch: "dev" para que las actualizaciones lleguen primero a devy no a main, asi se hace el proceso de verificación. El equipo trabajó con ramas temporales que se integraban en dev mediante Pull Request y, tras validarse, se promovían a main. Hubo incompatibilidades entre Spring Boot y Maven que Dependabot ayudó a detectar para que luego las solucionaramos en equipo. En general todo este proceso me ayudo a entender la importancia del uso de ramas temporales y la rama "dev" que nos permitia validar si habia incompatibilidades.
 
 ---
 
