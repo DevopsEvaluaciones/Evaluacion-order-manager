@@ -19,7 +19,7 @@ class OrderTest {
     void shouldCreateValidOrder() {
         Order order = new Order("  Juan Pérez  ");
 
-        assertEquals("Juan Pérez3./", order.getCustomerName());
+        assertEquals("Juan Pérez", order.getCustomerName());
         assertEquals(OrderStatus.PENDING, order.getStatus());
         assertEquals(BigDecimal.ZERO, order.getTotalAmount());
         assertTrue(order.getItems().isEmpty());
